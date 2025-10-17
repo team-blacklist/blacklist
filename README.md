@@ -1,8 +1,9 @@
-# Blacklist Project
+# Blacklist
+### An agent that hacks into your website, so that the bad guys don't.
 
-A full-stack application with Next.js frontend and Fastify backend.
 
 ## Project Structure
+A full-stack application with Next.js frontend and Fastify backend.
 
 ```
 blacklist/
@@ -12,12 +13,14 @@ blacklist/
 
 ## Getting Started
 
+- you'll have to run the backend and the frontend
+
 ### Backend (Port 3001)
 
 ```bash
 cd blacklist-backend
 bun install
-bun run dev
+bun run start
 ```
 
 ### Frontend (Port 3000)
