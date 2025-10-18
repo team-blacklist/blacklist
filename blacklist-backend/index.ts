@@ -14,9 +14,10 @@ if (!process.env.BROWSERBASE_API_KEY) {
 }
 
 import { ensureSessionAndBrowser, getPlaywrightTools, cleanupBrowser } from "./PenTestingAgent/playwright-tools";
+import type { ToolCallOptions, ToolExecuteFunction } from "ai";
 
 const fastify = Fastify({
-  logger: true,
+  logger: false,
 });
 
 // allow requests from frontend server (thats running on port 3000)
@@ -121,7 +122,7 @@ fastify.post("/browser/init", {
   try {
     console.log("🚀 Initializing Browserbase session...");
     const liveViewLink = await ensureSessionAndBrowser();
-    
+    console.log(liveViewLink)
     if (!liveViewLink) {
       throw new Error("Failed to get live view link");
     }
@@ -154,14 +155,29 @@ fastify.post("/test-website", async (request, reply) => {
   }
 
   try {
-    // Initialize Browserbase session and get live view link
-    console.log("🎬 Initializing browser session for testing...");
-    const liveViewLink = await ensureSessionAndBrowser();
+    console.log("🎬 Starting website test for:", url);
     
-    // Get Playwright tools (browser is now ready)
+    // Get the live view link (session should already be created)
+    const liveViewLink = await ensureSessionAndBrowser();
+    console.log("🔴 Live View Link:", liveViewLink);
+    
+    // Get Playwright tools - this will connect the browser
+    console.log("🔧 Getting Playwright tools...");
     const tools = await getPlaywrightTools();
     
-    console.log("🔴 Live View Link:", liveViewLink);
+    // Navigate to the URL using Playwright to activate the browser
+    console.log("🌐 Navigating to URL in browser...");
+    const { execute_playwright_code } = tools;
+    
+    const navigationResult = await execute_playwright_code.execute({
+      code: `console.log('Starting navigation to ${url}');
+        await page.goto('${url}', { waitUntil: 'domcontentloaded', timeout: 45000 });
+        console.log('Navigation complete');
+        return { title: await page.title(), url: page.url() };
+      `
+    }, {} as ToolCallOptions);
+    
+    console.log("✅ Navigation result:", navigationResult);
     
     const websiteDir = path.join(OUTDIR_BASE, safeFilename(url));
 
@@ -176,12 +192,13 @@ fastify.post("/test-website", async (request, reply) => {
       status: "in_progress",
       outputFolder: websiteDir,
       liveViewLink: liveViewLink, // Send live view link to frontend
-      browserReady: true
+      browserReady: true,
+      navigationResult: navigationResult
     };
   } catch (error: any) {
-    console.error("❌ Error initializing browser:", error);
+    console.error("❌ Error during website test:", error);
     return reply.status(500).send({
-      error: "Failed to initialize browser session",
+      error: "Failed to test website",
       details: error.message
     });
   }
