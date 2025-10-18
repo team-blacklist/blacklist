@@ -1,11 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import LiveView from '@/components/LiveView'
+import { useEffect, useState } from 'react'
+
 
 export default function Home() {
   const [url, setUrl] = useState('')
   const [confirmed, setConfirmed] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [liveViewLink, setLiveViewLink] = useState("http://localhost:3000")
 
   const isValidUrl = (string: string) => {
     try {
@@ -76,6 +79,8 @@ export default function Home() {
               </span>
             </label>
           </div>
+
+          <LiveView liveViewLink={liveViewLink} />
           
           <button
             type="submit"
