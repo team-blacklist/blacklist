@@ -4,6 +4,17 @@ import { chromium, type Response } from "playwright";
 import fs from "fs";
 import path from "path";
 
+// Load environment variables explicitly for Bun
+if (!process.env.BROWSERBASE_API_KEY) {
+  console.error("❌ BROWSERBASE_API_KEY is not set!");
+  console.log("Please create a .env file with:");
+  console.log("BROWSERBASE_API_KEY=your_key_here");
+  console.log("BROWSERBASE_PROJECT_ID=your_project_id_here");
+  process.exit(1);
+}
+
+import { ensureSessionAndBrowser, getPlaywrightTools, cleanupBrowser } from "./PenTestingAgent/playwright-tools";
+
 const fastify = Fastify({
   logger: true,
 });
@@ -98,6 +109,36 @@ async function scrapeWebsite(url: string, outDir: string, maxDepth = 2, visited 
   }
 }
 
+fastify.post("/browser/init", {
+  schema: {
+    body: {
+      type: 'object',
+      properties: {},
+      additionalProperties: true
+    }
+  }
+}, async (request, reply) => {
+  try {
+    console.log("🚀 Initializing Browserbase session...");
+    const liveViewLink = await ensureSessionAndBrowser();
+    
+    if (!liveViewLink) {
+      throw new Error("Failed to get live view link");
+    }
+
+    return {
+      success: true,
+      liveViewLink,
+      message: "Browser session initialized successfully"
+    };
+  } catch (error: any) {
+    console.error("❌ Browser initialization failed:", error);
+    return reply.status(500).send({
+      success: false,
+      error: error.message || "Failed to initialize browser session"
+    });
+  }
+});
 
 fastify.post("/test-website", async (request, reply) => {
   const { url } = request.body as { url: string };
@@ -111,25 +152,67 @@ fastify.post("/test-website", async (request, reply) => {
   } catch {
     return reply.status(400).send({ error: "Invalid URL format" });
   }
-  const websiteDir = path.join(OUTDIR_BASE, safeFilename(url));
 
-  // Run scraping asynchronously in the background
-  scrapeWebsite(url, websiteDir)
-    .then(() => console.log(`Scraping completed for ${url}`))
-    .catch((err) => console.error(err));
+  try {
+    // Initialize Browserbase session and get live view link
+    console.log("🎬 Initializing browser session for testing...");
+    const liveViewLink = await ensureSessionAndBrowser();
+    
+    // Get Playwright tools (browser is now ready)
+    const tools = await getPlaywrightTools();
+    
+    console.log("🔴 Live View Link:", liveViewLink);
+    
+    const websiteDir = path.join(OUTDIR_BASE, safeFilename(url));
 
-  return {
-    message: "Website testing started",
-    url: url,
-    status: "in_progress",
-    outputFolder: websiteDir
-  };
+    // Run scraping asynchronously in the background
+    scrapeWebsite(url, websiteDir)
+      .then(() => console.log(`✅ Scraping completed for ${url}`))
+      .catch((err) => console.error("❌ Scraping error:", err));
+
+    return {
+      message: "Website testing started",
+      url: url,
+      status: "in_progress",
+      outputFolder: websiteDir,
+      liveViewLink: liveViewLink, // Send live view link to frontend
+      browserReady: true
+    };
+  } catch (error: any) {
+    console.error("❌ Error initializing browser:", error);
+    return reply.status(500).send({
+      error: "Failed to initialize browser session",
+      details: error.message
+    });
+  }
+});
+
+fastify.addHook('onClose', async () => {
+  console.log("🧹 Cleaning up browser sessions...");
+  await cleanupBrowser();
+});
+
+process.on('SIGINT', async () => {
+  console.log("\n🛑 Shutting down gracefully...");
+  await cleanupBrowser();
+  await fastify.close();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log("\n🛑 Shutting down gracefully...");
+  await cleanupBrowser();
+  await fastify.close();
+  process.exit(0);
 });
 
 const start = async () => {
   try {
     await fastify.listen({ port: 3001, host: "0.0.0.0" });
-    console.log("Server running on http://localhost:3001");
+    console.log("✅ Server running on http://localhost:3001");
+    console.log("\n📋 Available endpoints:");
+    console.log("  POST /browser/init    - Initialize Browserbase session");
+    console.log("  POST /test-website   - Test website with live browser view\n");
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
