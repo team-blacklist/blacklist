@@ -2,9 +2,23 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import { runCompletePenTest } from "./PenTestingAgent/agent_runner";
 import { scrapeWebsite, getWebsiteDir } from "./website-scraper";
+import fastifyStatic from '@fastify/static';
+import path from 'path';
+import fs from 'fs';
 
 const fastify = Fastify({
   logger: true,
+});
+
+await fastify.register(fastifyStatic, {
+  root: path.join(process.cwd(), 'results'), // your results folder
+  prefix: '/results/', // frontend can access files via /results/filename
+});
+
+// Optional: endpoint to list available result files
+fastify.get('/results/list', async (request, reply) => {
+  const files = fs.readdirSync(path.join(process.cwd(), 'results'));
+  return { files };
 });
 
 // Allow requests from frontend server (running on port 3000)
