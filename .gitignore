@@ -1,1 +1,7 @@
 .env
+
+blacklist-backend/scraped_websites
+
+blacklist-backend/PenTestingAgent/EvalEngine/
+
+blacklist-backend/credentials/
