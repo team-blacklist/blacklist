@@ -10,8 +10,25 @@ await fastify.register(cors, {
   origin: ["http://localhost:3000"],
 });
 
-fastify.get("/greeting", async (request, reply) => {
-  return { message: "hello" };
+
+fastify.post("/test-website", async (request, reply) => {
+  const { url } = request.body as { url: string };
+  
+  if (!url) {
+    return reply.status(400).send({ error: "URL is required" });
+  }
+
+  try {
+    new URL(url);
+  } catch {
+    return reply.status(400).send({ error: "Invalid URL format" });
+  }
+
+  return {
+    message: "Website testing started",
+    url: url,
+    status: "in_progress"
+  };
 });
 
 const start = async () => {

@@ -14,7 +14,9 @@
     "format": "bun run biome format . --write"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.52",
     "@fastify/cors": "^11.1.0",
+    "ai": "^5.0.76",
     "fastify": "^5.6.1"
   },
   "devDependencies": {
