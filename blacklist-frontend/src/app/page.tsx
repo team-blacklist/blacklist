@@ -145,7 +145,7 @@ export default function Home() {
               }}
             >
               {/* Logo Section */}
-              <div>
+              <div style={{ position: "relative" }}>
                 <h1
                   style={{
                     fontSize: "40px",
@@ -368,6 +368,61 @@ export default function Home() {
                       "Start Testing"
                     )}
                   </button>
+
+                  {/* Social Engineering Attack Button */}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!url || !isValidUrl(url)) return;
+                      try {
+                        const response = await fetch("http://localhost:3001/social-engineering", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({ url }),
+                        });
+                        if (response.ok) {
+                          console.log("Social engineering attack initiated");
+                        }
+                      } catch (error) {
+                        console.error("Error:", error);
+                      }
+                    }}
+                    disabled={!url || !isValidUrl(url)}
+                    style={{
+                      width: "100%",
+                      padding: "12px 24px",
+                      borderRadius: "4px",
+                      fontWeight: "500",
+                      color: "white",
+                      fontSize: "14px",
+                      border: "none",
+                      cursor: url && isValidUrl(url) ? "pointer" : "not-allowed",
+                      background: url && isValidUrl(url)
+                        ? "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)"
+                        : "rgba(255, 255, 255, 0.1)",
+                      opacity: url && isValidUrl(url) ? 1 : 0.5,
+                      transition: "all 0.2s",
+                      boxShadow: url && isValidUrl(url)
+                        ? "0 10px 25px -5px rgba(220, 38, 38, 0.3)"
+                        : "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (url && isValidUrl(url)) {
+                        e.currentTarget.style.transform = "scale(1.02)";
+                        e.currentTarget.style.boxShadow = "0 15px 30px -5px rgba(220, 38, 38, 0.4)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "scale(1)";
+                      e.currentTarget.style.boxShadow = url && isValidUrl(url)
+                        ? "0 10px 25px -5px rgba(220, 38, 38, 0.3)"
+                        : "none";
+                    }}
+                  >
+                    Attempt Social Engineering Attack
+                  </button>
                 </div>
               </div>
             </div>
@@ -431,7 +486,7 @@ export default function Home() {
                         Results will appear here after testing
                       </div>
                     ) : (
-                      <MarkdownRenderer content={analysisLines.join('\n')} />
+                      <MarkdownRenderer content={analysisLines.join("\n")} />
                     )}
                   </div>
                 </div>

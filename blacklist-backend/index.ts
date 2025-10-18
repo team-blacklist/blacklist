@@ -64,6 +64,30 @@ fastify.post("/test-website", async (request, reply) => {
   };
 });
 
+// Social Engineering Attack endpoint
+fastify.post("/social-engineering", async (request, reply) => {
+  const { url } = request.body as { url: string };
+
+  if (!url) {
+    return reply.status(400).send({ error: "URL is required" });
+  }
+
+  try {
+    new URL(url);
+  } catch {
+    return reply.status(400).send({ error: "Invalid URL format" });
+  }
+
+  // TODO: Implement social engineering attack logic
+  console.log(`Social engineering attack initiated for: ${url}`);
+  
+  return {
+    message: "Social engineering attack initiated",
+    url: url,
+    status: "initiated",
+  };
+});
+
 const start = async () => {
   try {
     await fastify.listen({ port: 3001, host: "0.0.0.0" });
