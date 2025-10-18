@@ -13,7 +13,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
         components={{
           h1: ({ children }) => (
             <h1 style={{
-              fontSize: '28px',
+              fontSize: '20px',
               fontWeight: '700',
               color: 'white',
               marginBottom: '16px',
@@ -26,7 +26,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
           ),
           h2: ({ children }) => (
             <h2 style={{
-              fontSize: '24px',
+              fontSize: '18px',
               fontWeight: '600',
               color: 'white',
               marginBottom: '12px',
