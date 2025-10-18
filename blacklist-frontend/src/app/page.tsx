@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import MarkdownRenderer from "../components/MarkdownRenderer";
 
 export default function Home() {
   const [url, setUrl] = useState("");
@@ -126,7 +127,7 @@ export default function Home() {
         style={{
           minHeight: "100vh",
           background: "black",
-          padding: "32px",
+          padding: "32px 32px 32px 16px",
         }}
       >
         <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
@@ -136,8 +137,8 @@ export default function Home() {
             {/* Left Column - Logo and Test Form */}
             <div
               style={{
-                width: "25%",
-                minWidth: "320px",
+                width: "20%",
+                minWidth: "280px",
                 display: "flex",
                 flexDirection: "column",
                 gap: "32px",
@@ -176,7 +177,7 @@ export default function Home() {
                 style={{
                   background: "rgba(255, 255, 255, 0.08)",
                   backdropFilter: "blur(16px)",
-                  borderRadius: "24px",
+                  borderRadius: "8px",
                   padding: "32px",
                   boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
                   border: "1px solid rgba(255, 255, 255, 0.15)",
@@ -224,7 +225,7 @@ export default function Home() {
                         padding: "12px 16px",
                         background: "rgba(255, 255, 255, 0.08)",
                         border: "1px solid rgba(255, 255, 255, 0.2)",
-                        borderRadius: "12px",
+                        borderRadius: "4px",
                         color: "white",
                         fontSize: "14px",
                         outline: "none",
@@ -248,7 +249,7 @@ export default function Home() {
                   <div
                     style={{
                       background: "rgba(255, 255, 255, 0.03)",
-                      borderRadius: "12px",
+                      borderRadius: "4px",
                       padding: "16px",
                       border: "1px solid rgba(255, 255, 255, 0.08)",
                     }}
@@ -295,7 +296,7 @@ export default function Home() {
                     style={{
                       width: "100%",
                       padding: "12px 24px",
-                      borderRadius: "12px",
+                      borderRadius: "4px",
                       fontWeight: "500",
                       color: "white",
                       fontSize: "14px",
@@ -383,12 +384,12 @@ export default function Home() {
               }}
             >
               {/* Vulnerability Summary */}
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ flex: 1.3, minWidth: 0 }}>
                 <div
                   style={{
                     background: "rgba(255, 255, 255, 0.08)",
                     backdropFilter: "blur(16px)",
-                    borderRadius: "24px",
+                    borderRadius: "8px",
                     padding: "32px",
                     border: "1px solid rgba(255, 255, 255, 0.15)",
                     height: "100%",
@@ -411,19 +412,10 @@ export default function Home() {
                   <div
                     style={{
                       flex: 1,
-                      color:
-                        analysisLines.length === 0
-                          ? "rgba(147, 197, 253, 0.5)"
-                          : "#bfdbfe",
                       fontSize: "14px",
                       overflowY: "auto",
-                      whiteSpace: "pre-wrap",
                       wordBreak: "break-word",
                       overflowWrap: "break-word",
-                      fontFamily:
-                        analysisLines.length > 0
-                          ? "'Courier New', monospace"
-                          : "inherit",
                     }}
                   >
                     {analysisLines.length === 0 ? (
@@ -433,14 +425,13 @@ export default function Home() {
                           alignItems: "center",
                           justifyContent: "center",
                           height: "100%",
+                          color: "rgba(147, 197, 253, 0.5)",
                         }}
                       >
                         Results will appear here after testing
                       </div>
                     ) : (
-                      analysisLines.map((line, i) => (
-                        <div key={i}>{line || "\u00A0"}</div>
-                      ))
+                      <MarkdownRenderer content={analysisLines.join('\n')} />
                     )}
                   </div>
                 </div>
@@ -452,7 +443,7 @@ export default function Home() {
                   style={{
                     background: "rgba(0, 0, 0, 0.4)",
                     backdropFilter: "blur(16px)",
-                    borderRadius: "24px",
+                    borderRadius: "8px",
                     padding: "32px",
                     border: "1px solid rgba(255, 255, 255, 0.15)",
                     height: "100%",

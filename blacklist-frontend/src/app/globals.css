@@ -13,3 +13,46 @@ body {
 input, button {
   font-family: inherit;
 }
+
+/* Markdown Content Styling */
+.markdown-content {
+  line-height: 1.6;
+}
+
+.markdown-content * {
+  max-width: 100%;
+}
+
+/* Ensure tables are responsive */
+.markdown-content table {
+  table-layout: auto;
+  word-wrap: break-word;
+}
+
+/* Additional spacing adjustments */
+.markdown-content > *:first-child {
+  margin-top: 0 !important;
+}
+
+.markdown-content > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Custom scrollbar for code blocks */
+.markdown-content pre::-webkit-scrollbar {
+  height: 8px;
+}
+
+.markdown-content pre::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.markdown-content pre::-webkit-scrollbar-thumb {
+  background: rgba(147, 197, 253, 0.3);
+  border-radius: 4px;
+}
+
+.markdown-content pre::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 197, 253, 0.5);
+}
