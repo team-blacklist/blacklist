@@ -1,5 +1,8 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import { chromium, type Response } from "playwright";
+import fs from "fs";
+import path from "path";
 
 const fastify = Fastify({
   logger: true,
@@ -10,6 +13,75 @@ await fastify.register(cors, {
   origin: ["http://localhost:3000"],
 });
 
+const OUTDIR_BASE = "scraped_websites";
+
+function safeFilename(url: string) {
+  const s = url.replace(/[:/?#&=]+/g, "_");
+  return s.length > 0 ? s.slice(0, 200) : "resource";
+}
+
+async function scrapeWebsite(url: string, outDir: string) {
+  // Delete existing folder if it exists
+  if (fs.existsSync(outDir)) {
+    fs.rmSync(outDir, { recursive: true, force: true });
+    console.log(`Deleted existing folder: ${outDir}`);
+  }
+
+  // Create a fresh folder
+  fs.mkdirSync(outDir, { recursive: true });
+  console.log(`Created folder: ${outDir}`);
+
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  const resources = new Map<string, Buffer>();
+
+  page.on("response", (r: Response) => {
+    r.body().then((buf) => {
+      if (buf && !r.url().startsWith("data:")) {
+        resources.set(r.url(), Buffer.from(buf));
+      }
+    }).catch(() => {});
+  });
+
+  await page.goto(url, { waitUntil: "networkidle" });
+
+  // DOM resources and inline content
+  const domResources = await page.evaluate(() => {
+    const urls: string[] = [];
+    document.querySelectorAll(
+      "img, script, link[rel='stylesheet'], source, video, audio, iframe, embed"
+    ).forEach((el) => {
+      const src = el.getAttribute("src") || el.getAttribute("href") || el.getAttribute("data-src");
+      if (src) urls.push(src);
+    });
+
+    const inlineScripts = Array.from(document.querySelectorAll("script:not([src])")).map(
+      (s) => s.textContent || ""
+    );
+    const inlineStyles = Array.from(document.querySelectorAll("style")).map((s) => s.textContent || "");
+
+    return { urls: Array.from(new Set(urls)), inlineScripts, inlineStyles };
+  });
+
+  // Save DOM lists
+  fs.writeFileSync(path.join(outDir, "dom_urls.json"), JSON.stringify(domResources.urls, null, 2));
+  fs.writeFileSync(path.join(outDir, "inline_scripts.js"), domResources.inlineScripts.join("\n\n/* --- */\n\n"));
+  fs.writeFileSync(path.join(outDir, "inline_styles.css"), domResources.inlineStyles.join("\n\n/* --- */\n\n"));
+
+  // Save network resources
+  for (const [urlKey, buf] of resources) {
+    const filename = path.join(outDir, safeFilename(urlKey));
+    try {
+      fs.writeFileSync(filename, buf);
+    } catch {
+      fs.writeFileSync(filename + ".meta.txt", `${urlKey}`);
+    }
+  }
+
+  await browser.close();
+}
 
 fastify.post("/test-website", async (request, reply) => {
   const { url } = request.body as { url: string };
@@ -23,11 +95,18 @@ fastify.post("/test-website", async (request, reply) => {
   } catch {
     return reply.status(400).send({ error: "Invalid URL format" });
   }
+  const websiteDir = path.join(OUTDIR_BASE, safeFilename(url));
+
+  // Run scraping asynchronously in the background
+  scrapeWebsite(url, websiteDir)
+    .then(() => console.log(`Scraping completed for ${url}`))
+    .catch((err) => console.error(err));
 
   return {
     message: "Website testing started",
     url: url,
-    status: "in_progress"
+    status: "in_progress",
+    outputFolder: websiteDir
   };
 });
 
