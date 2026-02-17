@@ -3,7 +3,7 @@
 
 
 ## Project Structure
-A full-stack application with Next.js frontend and Fastify backend.
+A full-stack application with Next.js frontend and Fastify backend
 
 ```
 blacklist/
